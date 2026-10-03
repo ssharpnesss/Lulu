@@ -11,3 +11,5 @@ config.toml
 training/data/
 poetry.lock
 assets/ruspam_model
+info_result.json
+result.json
