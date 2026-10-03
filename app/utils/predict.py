@@ -15,5 +15,4 @@ def predict(text):
         outputs = model(**inputs)
         logits = outputs.logits
         predicted_class = torch.argmax(logits, dim=1).item()
-        print(predicted_class)
     return predicted_class

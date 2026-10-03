@@ -10,3 +10,4 @@ config.toml
 .training-tmp/
 training/data/
 poetry.lock
+assets/ruspam_model
