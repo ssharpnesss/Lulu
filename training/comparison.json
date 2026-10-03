@@ -1,0 +1,146 @@
+{
+  "baseline": {
+    "n": 4000,
+    "accuracy": 0.77025,
+    "accuracy_wilson_95": [
+      0.7569576164236528,
+      0.7830237854379992
+    ],
+    "spam_precision": 0.8745668745668745,
+    "spam_recall": 0.631,
+    "spam_f1": 0.7330816148707523,
+    "roc_auc": 0.8174343749999999,
+    "false_positive_rate": 0.0905,
+    "tn": 1819,
+    "fp": 181,
+    "fn": 738,
+    "tp": 1262
+  },
+  "finetuned": {
+    "n": 4000,
+    "accuracy": 0.96525,
+    "accuracy_wilson_95": [
+      0.9591130386054423,
+      0.9704941666346452
+    ],
+    "spam_precision": 0.9654827413706853,
+    "spam_recall": 0.965,
+    "spam_f1": 0.9652413103275819,
+    "roc_auc": 0.992785125,
+    "false_positive_rate": 0.0345,
+    "tn": 1931,
+    "fp": 69,
+    "fn": 70,
+    "tp": 1930
+  },
+  "accuracy_change_percentage_points": 19.500000000000007,
+  "paired": {
+    "fixed_errors": 831,
+    "new_errors": 51
+  },
+  "settings": {
+    "epochs": 1,
+    "batch_size": 4,
+    "max_length": 256,
+    "seed": 42,
+    "learning_rate": 2e-05,
+    "effective_batch": 16,
+    "spam_index": 1,
+    "device": "NVIDIA GeForce GTX 1650",
+    "precision": "float32",
+    "selection": "best validation spam F1 at fixed 0.5 threshold",
+    "truncated_messages": {
+      "train": 119,
+      "validation": 27,
+      "test": 42
+    }
+  },
+  "training_seconds": 346.78466153144836,
+  "history": [
+    {
+      "epoch": 1,
+      "samples": 3000,
+      "validation": {
+        "n": 2000,
+        "accuracy": 0.945,
+        "accuracy_wilson_95": [
+          0.9341283999249005,
+          0.9541653654106429
+        ],
+        "spam_precision": 0.9587628865979382,
+        "spam_recall": 0.93,
+        "spam_f1": 0.9441624365482234,
+        "roc_auc": 0.984947,
+        "false_positive_rate": 0.04,
+        "tn": 960,
+        "fp": 40,
+        "fn": 70,
+        "tp": 930
+      }
+    },
+    {
+      "epoch": 1,
+      "samples": 6000,
+      "validation": {
+        "n": 2000,
+        "accuracy": 0.9545,
+        "accuracy_wilson_95": [
+          0.9444624737843038,
+          0.9627948663168301
+        ],
+        "spam_precision": 0.9739311783107404,
+        "spam_recall": 0.934,
+        "spam_f1": 0.9535477284328739,
+        "roc_auc": 0.99029,
+        "false_positive_rate": 0.025,
+        "tn": 975,
+        "fp": 25,
+        "fn": 66,
+        "tp": 934
+      }
+    },
+    {
+      "epoch": 1,
+      "samples": 9000,
+      "validation": {
+        "n": 2000,
+        "accuracy": 0.9585,
+        "accuracy_wilson_95": [
+          0.9488442560070109,
+          0.9663977471533187
+        ],
+        "spam_precision": 0.9801047120418848,
+        "spam_recall": 0.936,
+        "spam_f1": 0.957544757033248,
+        "roc_auc": 0.9914430000000001,
+        "false_positive_rate": 0.019,
+        "tn": 981,
+        "fp": 19,
+        "fn": 64,
+        "tp": 936
+      }
+    },
+    {
+      "epoch": 1,
+      "samples": 12000,
+      "validation": {
+        "n": 2000,
+        "accuracy": 0.961,
+        "accuracy_wilson_95": [
+          0.9515937245556543,
+          0.9686386930166728
+        ],
+        "spam_precision": 0.9656565656565657,
+        "spam_recall": 0.956,
+        "spam_f1": 0.9608040201005025,
+        "roc_auc": 0.991605,
+        "false_positive_rate": 0.034,
+        "tn": 966,
+        "fp": 34,
+        "fn": 44,
+        "tp": 956
+      }
+    }
+  ],
+  "source_model_sha256": "cba9a84a14c4849aef795bb5246569e1d0a6d6c7206c2cba4075e2a3044b7b81"
+}

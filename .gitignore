@@ -6,4 +6,7 @@ __pycache__/
 config.toml
 *.db
 .venv/
+.venv-training/
+.training-tmp/
+training/data/
 poetry.lock
