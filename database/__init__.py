@@ -8,10 +8,11 @@ def init_database():
     with db.atomic():
         if db.table_exists("chats"):
             columns = {column.name for column in db.get_columns("chats")}
-            if "is_deleted" not in columns:
-                migrate(SqliteMigrator(db).add_column(
-                    "chats", "is_deleted", Chats.is_deleted
-                ))
+            for name in ("is_deleted", "welcome_template"):
+                if name not in columns:
+                    migrate(SqliteMigrator(db).add_column(
+                        "chats", name, getattr(Chats, name)
+                    ))
         db.create_tables(
             [
                 User,

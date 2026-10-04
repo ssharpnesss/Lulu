@@ -9,7 +9,17 @@ config.toml
 .venv-training/
 .training-tmp/
 training/data/
+training/v02/data/
 poetry.lock
 assets/ruspam_model
+assets/
+training/
+data_result.json
+*.safetensors
+*.pt
+*.pth
+*.onnx
+*.bin
+*.log
 info_result.json
 result.json

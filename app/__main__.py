@@ -25,7 +25,7 @@ async def main() -> None:
     dp.include_router(get_handlers())
     register_middlewares(dp)
 
-    await bot.delete_webhook()
+    await bot.delete_webhook(True)
     await dp.start_polling(bot, config=config)
 
 

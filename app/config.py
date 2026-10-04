@@ -3,13 +3,14 @@ from pathlib import Path
 
 import toml
 from dotenv import load_dotenv
-from pydantic import BaseModel, ConfigDict, SecretStr
+from pydantic import BaseModel, ConfigDict, Field, SecretStr
 
 class ConfigSection(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
 class BotConfig(ConfigSection):
     token: SecretStr
+    spam_threshold: float = Field(default=0.9, gt=0, le=1)
     protects: list = [
         {"name": "antispam"},
         {"name": "welcome"},

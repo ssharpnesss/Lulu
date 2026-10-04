@@ -27,4 +27,4 @@ class TrackMiddleware(BaseMiddleware):
 
 def register_middleware(dp: Dispatcher):
     track_middleware = TrackMiddleware()
-    dp.message.outer_middleware(track_middleware)
+    dp.message.middleware(track_middleware)

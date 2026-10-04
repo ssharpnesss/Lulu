@@ -1,18 +1,54 @@
-from transformers import AutoTokenizer, AutoModelForSequenceClassification
+import re
+import json
 import torch
-from pathlib import Path
+import torch.nn as nn
+from transformers import AutoTokenizer, AutoModel
+from huggingface_hub import hf_hub_download
 
-project_root = Path(__file__).resolve().parents[2]
-model_path = project_root / "assets/ruspam_model"
+REPO = "SafeTechDev/Russian-Spam-classifier"
+device = "cuda" if torch.cuda.is_available() else "cpu"
 
-tokenizer = AutoTokenizer.from_pretrained(model_path)
-model = AutoModelForSequenceClassification.from_pretrained(model_path)
+# ── Архитектура ──────────────────────────────────────────────────────────
+class BinaryModel(nn.Module):
+    def __init__(self, model_name):
+        super().__init__()
+        self.bert = AutoModel.from_pretrained(model_name, low_cpu_mem_usage=True)
+        hidden = self.bert.config.hidden_size
+        self.binary = nn.Sequential(
+            nn.Dropout(0.2),
+            nn.Linear(hidden, 1)
+        )
+
+    def forward(self, input_ids, attention_mask):
+        outputs = self.bert(input_ids=input_ids, attention_mask=attention_mask)
+        pooled = outputs.last_hidden_state[:, 0]
+        return self.binary(pooled).squeeze(-1)
+
+# ── Загрузка ─────────────────────────────────────────────────────────────
+config_path = hf_hub_download(REPO, "config.json")
+weights_path = hf_hub_download(REPO, "pytorch_model.bin")
+
+with open(config_path, encoding="utf-8") as f:
+    cfg = json.load(f)
+
+MAX_LENGTH = cfg.get("max_length", 40)
+
+tokenizer = AutoTokenizer.from_pretrained(REPO)
+
+model = BinaryModel(cfg["model"]).to(device)
+model.load_state_dict(torch.load(weights_path, map_location=device, weights_only=True))
 model.eval()
 
-def predict(text):
-    inputs = tokenizer(text, return_tensors="pt", truncation=True, max_length=256)
+# ── Инференс ─────────────────────────────────────────────────────────────
+def classify(text: str) -> dict:
+    enc = tokenizer(
+        text, truncation=True, padding="max_length",
+        max_length=MAX_LENGTH, return_tensors="pt"
+    )
     with torch.no_grad():
-        outputs = model(**inputs)
-        logits = outputs.logits
-        predicted_class = torch.argmax(logits, dim=1).item()
-    return predicted_class
+        logits = model(enc["input_ids"].to(device), enc["attention_mask"].to(device))
+
+    prob_spam = float(torch.sigmoid(logits).squeeze().cpu().item())
+    label = "SPAM" if prob_spam >= 0.9 else "SAFE"
+    print(prob_spam, label)
+    return {"label": label, "prob_spam": prob_spam}

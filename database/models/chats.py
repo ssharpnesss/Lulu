@@ -1,4 +1,4 @@
-from peewee import BigIntegerField, BooleanField, CharField, DateTimeField
+from peewee import BigIntegerField, BooleanField, CharField, DateTimeField, TextField
 
 from database.loader import BaseModel
 
@@ -13,6 +13,7 @@ class Chats(BaseModel):
     chat_type = CharField(default="group")
     username = CharField(null=True)
     is_deleted = BooleanField(default=False)
+    welcome_template = TextField(null=True)
 
     created_at = DateTimeField(default=datetime.now)
     updated_at = DateTimeField(default=datetime.now)

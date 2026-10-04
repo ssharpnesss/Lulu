@@ -1,7 +1,0 @@
-{
-  "original_model_unchanged": true,
-  "source_model_sha256": "cba9a84a14c4849aef795bb5246569e1d0a6d6c7206c2cba4075e2a3044b7b81",
-  "finetuned_model_sha256": "3b9aabb5addb7ac36f1bceba8a4b828417270d0a15d3c1762db17cc97909bd3d",
-  "changed_tensors": 86,
-  "saved_test_predictions_match_report": true
-}

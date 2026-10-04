@@ -40,7 +40,7 @@ async def new_chat_for_lulu(event: ChatMemberUpdated):
     )
 
 @router.my_chat_member(ChatMemberUpdatedFilter(IS_NOT_MEMBER >> IS_ADMIN))
-async def bot_added_as_admin(event: ChatMemberUpdated):
+async def lulu_added_as_admin(event: ChatMemberUpdated):
     await save_chat(event)
     await event.answer(
         "Привет! Я - <b>Lulu.</b>\n"
