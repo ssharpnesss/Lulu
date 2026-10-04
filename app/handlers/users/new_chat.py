@@ -1,11 +1,12 @@
 import logging
-from datetime import datetime
 
 from aiogram import F, Router
 from aiogram.exceptions import TelegramAPIError
 from aiogram.filters import ChatMemberUpdatedFilter, IS_NOT_MEMBER, IS_MEMBER, IS_ADMIN
 from aiogram.types import ChatMemberUpdated
-from database.models.chats import Chats
+from database.models.chat import Chat
+
+from app.utils.time import get_now
 
 router = Router()
 logger = logging.getLogger(__name__)
@@ -13,10 +14,10 @@ logger = logging.getLogger(__name__)
 
 async def save_chat(event: ChatMemberUpdated):
     if event.chat.type in {"group", "supergroup", "channel"}:
-        chat = await Chats.update_chat(event.chat, added_by_id=event.from_user.id)
+        chat = await Chat.update_chat(event.chat, added_by_id=event.from_user.id)
         chat.is_deleted = False
         chat.owner_id = None
-        chat.updated_at = datetime.now()
+        chat.updated_at = get_now()
         chat.save()
         try:
             administrators = await event.bot.get_chat_administrators(event.chat.id)
@@ -50,4 +51,4 @@ async def lulu_added_as_admin(event: ChatMemberUpdated):
 
 @router.my_chat_member(ChatMemberUpdatedFilter(IS_MEMBER >> IS_NOT_MEMBER))
 async def bot_has_beed_kicked(event: ChatMemberUpdated):
-    await Chats.mark_deleted(event.chat)
+    await Chat.mark_deleted(event.chat)

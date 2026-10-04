@@ -14,8 +14,8 @@ from pydantic import ValidationError
 
 from app.config import BotConfig, Config
 from app.filters.lulu import LuluFilter
-from app.handlers.users.commands.protect import router
-from database.models.protects import Protects
+from app.handlers.users.commands.settings.setting import router
+from database.models.setting import Setting
 
 
 class CommandTests(unittest.IsolatedAsyncioTestCase):
@@ -23,9 +23,9 @@ class CommandTests(unittest.IsolatedAsyncioTestCase):
         self.bot = Bot('123456:TEST_TOKEN')
         self.config = Config(bot=BotConfig(token='test'))
         self.db = SqliteDatabase(':memory:')
-        self.binding = self.db.bind_ctx([Protects])
+        self.binding = self.db.bind_ctx([Setting])
         self.binding.__enter__()
-        self.db.create_tables([Protects])
+        self.db.create_tables([Setting])
         self.answer_patch = patch.object(Message, 'answer', new_callable=AsyncMock)
         self.answer = self.answer_patch.start()
         self.member_patch = patch.object(self.bot, 'get_chat_member', new_callable=AsyncMock)
@@ -73,36 +73,36 @@ class CommandTests(unittest.IsolatedAsyncioTestCase):
                                ('Lulu, защита antispam включить',True),
                                ('Лулу защита антиспам выключить',False)]:
             await self.route(text)
-            self.assertEqual(Protects.select().count(),1)
-            self.assertIs(Protects.get().enabled,expected)
+            self.assertEqual(Setting.select().count(),1)
+            self.assertIs(Setting.get().enabled,expected)
 
     async def test_invalid_commands_do_not_write(self):
         for text in ['Лулу защита', 'Лулу защита антиспам maybe', 'Лулу защита unknown вкл',
                      'Лулу защита антиспам вкл extra', '/protect antispam вкл', 'лулузащита антиспам вкл']:
             await self.route(text)
-        self.assertEqual(Protects.select().count(),0)
+        self.assertEqual(Setting.select().count(),0)
 
     async def test_permissions_fail_closed(self):
         self.member.return_value = SimpleNamespace(status=ChatMemberStatus.MEMBER)
         await self.route('Лулу защита антиспам вкл')
-        self.assertEqual(Protects.select().count(),0)
+        self.assertEqual(Setting.select().count(),0)
         self.member.side_effect = TelegramBadRequest(method=GetChatMember(chat_id=-1,user_id=7),message='Unavailable')
         await self.route('Лулу защита антиспам вкл')
-        self.assertEqual(Protects.select().count(),0)
+        self.assertEqual(Setting.select().count(),0)
 
     async def test_anonymous_admin_and_private_chat(self):
         await self.route('Лулу защита welcome вкл',sender_chat={'id':-1001234567890,'type':'supergroup','title':'Test'})
-        self.assertEqual(Protects.get().protection,'welcome')
+        self.assertEqual(Setting.get().protection,'welcome')
         self.member.assert_not_called()
         await self.route('Лулу защита антиспам вкл',chat={'id':7,'type':'private','first_name':'Test'})
-        self.assertEqual(Protects.select().count(),1)
+        self.assertEqual(Setting.select().count(),1)
 
 
 class ProbabilityTests(unittest.IsolatedAsyncioTestCase):
     async def test_probability_and_threshold(self):
         import torch
         from app.utils import predict as prediction
-        from app.handlers.users.protects import antispam
+        from app.handlers.users.settings import antispam
         logits = torch.tensor([[0., 2.]])
         fake_model = SimpleNamespace(config=SimpleNamespace(label2id={'spam':0,'ham':1}))
         from unittest.mock import Mock
@@ -115,7 +115,7 @@ class ProbabilityTests(unittest.IsolatedAsyncioTestCase):
         config = Config(bot=BotConfig(token='test',spam_threshold=.9))
         message = SimpleNamespace(from_user=None,chat=SimpleNamespace(id=-1),text='text',caption=None,
                                   reply=AsyncMock(return_value=SimpleNamespace(delete=AsyncMock())),delete=AsyncMock())
-        with patch.object(Protects,'is_enabled',new=AsyncMock(return_value=True)), patch.object(antispam,'predict') as predict, patch.object(antispam.asyncio,'sleep',new=AsyncMock()):
+        with patch.object(Setting,'is_enabled',new=AsyncMock(return_value=True)), patch.object(antispam,'predict') as predict, patch.object(antispam.asyncio,'sleep',new=AsyncMock()):
             for value, deleted in [(.89,False),(.9,True)]:
                 message.delete.reset_mock()
                 predict.return_value=value

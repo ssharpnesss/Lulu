@@ -12,12 +12,12 @@ from peewee import SqliteDatabase
 from playhouse.migrate import SqliteMigrator, migrate
 
 from app.config import BotConfig, Config
-from app.handlers.users.commands import get_commands_handlers
-from app.handlers.users.protects import welcome
+from app.handlers.users.commands.settings import get_commands_handlers
+from app.handlers.users.settings import welcome
 from app.utils.welcome import render_welcome
 from database import init_database
-from database.models.chats import Chats
-from database.models.protects import Protects
+from database.models.chat import Chat
+from database.models.setting import Setting
 from database.models.user import User as DatabaseUser
 
 
@@ -28,9 +28,9 @@ class WelcomeTests(unittest.IsolatedAsyncioTestCase):
 
     async def asyncSetUp(self):
         self.db = SqliteDatabase(':memory:')
-        self.binding = self.db.bind_ctx([Chats, Protects])
+        self.binding = self.db.bind_ctx([Chat, Setting])
         self.binding.__enter__()
-        self.db.create_tables([Chats, Protects])
+        self.db.create_tables([Chat, Setting])
         self.bot = Bot('123456:TEST_TOKEN')
         self.patches = [patch.object(welcome,'db',self.db),
                         patch.object(Message,'answer',new_callable=AsyncMock),
@@ -57,14 +57,14 @@ class WelcomeTests(unittest.IsolatedAsyncioTestCase):
     async def test_template_and_join_event_through_router(self):
         template='<tg-emoji emoji-id="5278611606756942667">❤️</tg-emoji> Привет! {имя}\n  {фамилия} {ид} {айди} {имяфамилия}'
         await self.route(self.message('лулу настройки приветствие '+template))
-        self.assertEqual(Chats.get().welcome_template,template)
-        self.assertTrue(await Protects.is_enabled(-1001,'welcome'))
+        self.assertEqual(Chat.get().welcome_template,template)
+        self.assertTrue(await Setting.is_enabled(-1001,'welcome'))
         self.answer.reset_mock()
         user=User(id=42,is_bot=False,first_name='Иван <&>',last_name='Тест')
         await self.route(self.message(new_chat_members=[user]))
         self.answer.assert_awaited_once_with(render_welcome(template,user),parse_mode='HTML')
         await self.route(self.message('Лулу защита приветствие выкл'))
-        self.assertFalse(await Protects.is_enabled(-1001,'welcome'))
+        self.assertFalse(await Setting.is_enabled(-1001,'welcome'))
         self.answer.reset_mock()
         await self.route(self.message(new_chat_members=[user]))
         self.answer.assert_not_awaited()
@@ -74,28 +74,28 @@ class WelcomeTests(unittest.IsolatedAsyncioTestCase):
         text=prefix+'❤️ Привет, {имя}!'
         offset=len(prefix.encode('utf-16-le'))//2
         await self.route(self.message(text,entities=[{'type':'custom_emoji','offset':offset,'length':2,'custom_emoji_id':'5278611606756942667'}]))
-        self.assertIn('<tg-emoji emoji-id="5278611606756942667">❤️</tg-emoji>',Chats.get().welcome_template)
+        self.assertIn('<tg-emoji emoji-id="5278611606756942667">❤️</tg-emoji>',Chat.get().welcome_template)
 
     async def test_permissions_and_invalid_templates_preserve_setting(self):
         await self.route(self.message('Лулу настройки приветствие Привет, {имя}!'))
-        original=Chats.get().welcome_template
+        original=Chat.get().welcome_template
         self.member.return_value=SimpleNamespace(status=ChatMemberStatus.MEMBER)
         await self.route(self.message('Лулу настройки приветствие Другое'))
-        self.assertEqual(Chats.get().welcome_template,original)
+        self.assertEqual(Chat.get().welcome_template,original)
         self.member.return_value=SimpleNamespace(status=ChatMemberStatus.ADMINISTRATOR)
         for text in ['', 'Привет {неизвестно}', 'x'*4097]:
             await self.route(self.message('Лулу настройки приветствие '+text))
-            self.assertEqual(Chats.get().welcome_template,original)
+            self.assertEqual(Chat.get().welcome_template,original)
         self.answer.side_effect=[TelegramBadRequest(method=SendMessage(chat_id=-1001,text='test'),message='Bad HTML'),None]
         await self.route(self.message('Лулу настройки приветствие <b>сломано'))
-        self.assertEqual(Chats.get().welcome_template,original)
+        self.assertEqual(Chat.get().welcome_template,original)
 
     async def test_chats_multiple_members_and_bots(self):
         await self.route(self.message('Лулу настройки приветствие A {имя}'))
         other=self.message('Лулу настройки приветствие B {имя}',chat={'id':-1002,'type':'supergroup','title':'Other'})
         await self.route(other)
-        self.assertEqual(Chats.get(Chats.chat_id==-1001).welcome_template,'A {имя}')
-        self.assertEqual(Chats.get(Chats.chat_id==-1002).welcome_template,'B {имя}')
+        self.assertEqual(Chat.get(Chat.chat_id==-1001).welcome_template,'A {имя}')
+        self.assertEqual(Chat.get(Chat.chat_id==-1002).welcome_template,'B {имя}')
         self.answer.reset_mock()
         await self.route(self.message(new_chat_members=[User(id=1,is_bot=False,first_name='Один'),User(id=2,is_bot=False,first_name='Два'),User(id=3,is_bot=True,first_name='Бот')]))
         self.assertEqual([c.args[0] for c in self.answer.await_args_list],['A Один','A Два'])
@@ -109,17 +109,17 @@ class WelcomeDataTests(unittest.TestCase):
 
     def test_existing_database_migration_is_idempotent(self):
         db=SqliteDatabase(':memory:')
-        with db.bind_ctx([DatabaseUser,Chats,Protects]),patch('database.loader.db',db):
-            db.create_tables([Chats,Protects])
-            Chats.create(chat_id=-1001,chat_name='Preserved')
-            Protects.create(chat_id=-1001,protection='antispam',enabled=True)
+        with db.bind_ctx([DatabaseUser,Chat,Setting]),patch('database.loader.db',db):
+            db.create_tables([Chat,Setting])
+            Chat.create(chat_id=-1001,chat_name='Preserved')
+            Setting.create(chat_id=-1001,protection='antispam',enabled=True)
             migrate(SqliteMigrator(db).drop_column('chats','welcome_template'))
             init_database()
             init_database()
-            self.assertEqual(Chats.get().chat_name,'Preserved')
-            self.assertIsNone(Chats.get().welcome_template)
-            self.assertTrue(Protects.get().enabled)
-            self.assertEqual(Chats.select().count(),1)
+            self.assertEqual(Chat.get().chat_name,'Preserved')
+            self.assertIsNone(Chat.get().welcome_template)
+            self.assertTrue(Setting.get().enabled)
+            self.assertEqual(Chat.select().count(),1)
         db.close()
 
 

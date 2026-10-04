@@ -1,4 +1,6 @@
 __pycache__/
+.vscode/
+models_hf/
 *.py[cod]
 .env
 .env.*

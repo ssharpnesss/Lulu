@@ -25,8 +25,8 @@ class BinaryModel(nn.Module):
         return self.binary(pooled).squeeze(-1)
 
 # ── Загрузка ─────────────────────────────────────────────────────────────
-config_path = hf_hub_download(REPO, "config.json")
-weights_path = hf_hub_download(REPO, "pytorch_model.bin")
+config_path = hf_hub_download(REPO, "config.json", local_dir="./models_hf")
+weights_path = hf_hub_download(REPO, "pytorch_model.bin", local_dir="./models_hf")
 
 with open(config_path, encoding="utf-8") as f:
     cfg = json.load(f)

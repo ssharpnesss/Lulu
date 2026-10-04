@@ -13,19 +13,19 @@ from database import init_database
 
 
 async def main() -> None:
-    init_database()
+    await init_database()
     args = parse_arguments()
     config = parse_config(args.config)
 
     bot = Bot(
         token=config.bot.token.get_secret_value(),
-        default=DefaultBotProperties(parse_mode="HTML")
+        default=DefaultBotProperties(parse_mode="HTML", link_preview_is_disabled=True),
     )
     dp = Dispatcher(storage=MemoryStorage())
     dp.include_router(get_handlers())
     register_middlewares(dp)
 
-    await bot.delete_webhook(True)
+    await bot.delete_webhook(drop_pending_updates=True)
     await dp.start_polling(bot, config=config)
 
 

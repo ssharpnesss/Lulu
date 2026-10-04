@@ -3,7 +3,7 @@ import re
 
 from aiogram.types import User
 
-PLACEHOLDERS = {"имя", "фамилия", "ид", "айди", "имяфамилия"}
+PLACEHOLDERS = {"имя", "фамилия", "ид", "айди", "имяфамилия", "юзер", "юзернейм"}
 PATTERN = re.compile(r"\{([^{}\n]+)\}")
 
 
@@ -14,6 +14,8 @@ def render_welcome(template: str, user: User) -> str:
         "ид": str(user.id),
         "айди": str(user.id),
         "имяфамилия": user.full_name,
+        "юзер": f"@{user.username}" if user.username else "",
+        "юзернейм": f"@{user.username}" if user.username else "",
     }
     def replace(match):
         key = match.group(1)

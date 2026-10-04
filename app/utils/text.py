@@ -1,16 +1,8 @@
-import asyncio
-
-from aiogram import Router, F
-from aiogram.types import Message
-
-from database.models.protects import Protects
-from app.utils.predict import classify
-from app.config import Config
-
-router = Router(name="antispam")
-
 import re
+import html
 
+def escape_html(text: str) -> str:
+    return html.escape(text, quote=False)
 
 def clean_and_normalize_text(text: str) -> str:
     if not text:
@@ -57,25 +49,3 @@ def clean_and_normalize_text(text: str) -> str:
     text = re.sub(r'\s+', ' ', text).strip()
 
     return text
-
-
-@router.message(F.chat.type.in_({"group", "supergroup"}), F.text | F.caption)
-async def cmd_antispam_detect_handler(message: Message, config: Config):
-    if message.from_user is not None and message.from_user.is_bot:
-        return
-    if not await Protects.is_enabled(message.chat.id, "antispam"):
-        return
-
-    text = message.text or message.caption
-    if not text or not text.strip():
-        return
-
-    safe_text = clean_and_normalize_text(text)
-
-    result = classify(safe_text)
-    if result["label"] == "SPAM":
-        if result["prob_spam"] >= config.bot.spam_threshold:
-            msg = await message.reply("Lulu считает это сообщение спамом поэтому оно удаляется!")
-            await asyncio.sleep(3)
-            await message.delete()
-            await msg.delete()
