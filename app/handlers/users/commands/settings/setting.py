@@ -53,7 +53,7 @@ async def show_protection(message: Message, data: SettingKeyboard):
     description = await SettingDescription.get_description(data.setting_key)
     if not description:
         return
-        
+
     enabled = await Setting.is_enabled(data.chat_id, data.setting_key)
     text = (
         f"<b>{description.short_name}</b>\n"
@@ -74,7 +74,7 @@ async def chat_settings_check_handler(callback: CallbackQuery, callback_data: Se
 
     if data.user_id != callback.from_user.id:
         return await callback.answer("Не трогай чужое.", show_alert=True)
-        
+
     if data.action == "back":
         await state.clear()
         await callback.message.edit_text(
@@ -82,16 +82,13 @@ async def chat_settings_check_handler(callback: CallbackQuery, callback_data: Se
             reply_markup=await setting_menu(data.user_id, data.chat_id),
         )
         return await callback.answer()
-        
+
     if data.action in ANTIFLOOD_PARAMETERS and data.setting_key == "antiflood":
         label, _, maximum = ANTIFLOOD_PARAMETERS[data.action]
-        prompt = await callback.message.answer(
-            f"{label}: введите {'целое ' if data.action == 'limit' else ''}число "
-            f"больше 0 и не больше {maximum}.\n"
-            "Для отмены кнопка назад",
-        )
         await state.set_state(ProtectionInput.value)
-        await state.set_data({"parameter": data.action, "chat_id": data.chat_id, "prompt_id": prompt.message_id})
+
+        # aleks sosi bibu
+
     elif data.action in {"s", "on", "off"}:
         await state.clear()
         if data.action != "s":
@@ -99,23 +96,3 @@ async def chat_settings_check_handler(callback: CallbackQuery, callback_data: Se
         await show_protection(callback.message, data)
     else:
         return await callback.answer("Неизвестное действие.", show_alert=True)
-
-@router.message(ProtectionInput.value, F.text, IsChatAdmin())
-async def protection_parameter_input(message: Message, state: FSMContext):
-    data = await state.get_data()
-
-    parameter = data["parameter"]
-    try:
-        value = parse_antiflood_parameter(parameter, message.text)
-    except ValueError:
-        _, _, maximum = ANTIFLOOD_PARAMETERS[parameter]
-        return await message.reply(
-            f"Введите {'целое ' if parameter == 'limit' else ''} число больше 0 "
-            f"и не больше {maximum}, ответив на сообщение с запросом.",
-        )
-    await Setting.set_setting(message.chat.id, f"antiflood_{parameter}", str(value))
-    await state.clear()
-    await message.reply(
-        f"{ANTIFLOOD_PARAMETERS[parameter][0]}: {value:g}. Сохранено.",
-        reply_markup=await protection_menu("antiflood", message.from_user.id, message.chat.id),
-    )

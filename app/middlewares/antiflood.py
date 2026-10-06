@@ -14,6 +14,7 @@ class AntiFloodMiddleware(BaseMiddleware):
         self.messages = {}
         self.warnings = {}
         self.next_cleanup = 0.0
+        self.warning_interval = 5
         self.expires = {}
 
     async def __call__(self, handler, message, data):
@@ -34,7 +35,6 @@ class AntiFloodMiddleware(BaseMiddleware):
         parameters = await Setting.get_antiflood_parameters(message.chat.id)
         limit = parameters["limit"]
         interval = parameters["interval"]
-        warning_interval = parameters["warning_interval"]
         now = monotonic()
 
         if now >= self.next_cleanup:
@@ -51,7 +51,7 @@ class AntiFloodMiddleware(BaseMiddleware):
             self.expires = {key: expiry for key, expiry in self.expires.items() if expiry > now}
             self.next_cleanup = now + 60
 
-        self.expires[key] = now + max(interval, warning_interval)
+        self.expires[key] = now + max(interval, self.warning_interval)
         times = self.messages.get(key)
         if times is None or times.maxlen != limit + 1:
             times = deque(times or (), maxlen=limit + 1)
@@ -67,7 +67,7 @@ class AntiFloodMiddleware(BaseMiddleware):
 
         should_warn = (
             now - self.warnings.get(key, float("-inf"))
-            >= warning_interval
+            >= self.warning_interval
         )
 
         if should_warn:

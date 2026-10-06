@@ -7,7 +7,6 @@ from database.loader import BaseModel
 ANTIFLOOD_PARAMETERS = {
     "limit": ("Лимит сообщений", 5, 1000),
     "interval": ("Интервал (сек.)", 1.5, 86400),
-    "warning_interval": ("Интервал предупреждений (сек.)", 5, 86400),
 }
 
 
@@ -26,7 +25,7 @@ class SettingDescription(BaseModel):
     setting_key = CharField()
     short_name = TextField()
     description = TextField()
-    status = TextField(default="public") # public | private(public - видят все, private - это настройки самого бота например текст что лулу будет писать при добавлении ее в чат) 
+    status = TextField(default="public") # public | private(public - видят все, private - это настройки самого бота например текст что лулу будет писать при добавлении ее в чат)
 
     button_emoji = TextField(null=True)
 
@@ -53,7 +52,7 @@ class Setting(BaseModel):
 
     class Meta:
         table_name = "settings"
-        
+
     @classmethod
     async def get_setting(cls, chat_id: int, setting_key: str):
         return cls.get_or_none((cls.chat_id == chat_id) & (cls.setting_key == setting_key))
@@ -66,7 +65,7 @@ class Setting(BaseModel):
         else:
             setting.value = value
             setting.save()
-            
+
         return setting
 
     @classmethod
