@@ -1,10 +1,12 @@
 from aiogram import Router
 
-from app.handlers.users.commands.protect import router as protect_router
+def get_commands_router():
 
-router = Router()
+    from .settings import get_command_setting_router
+    from .stats import router as stats_router
 
-def get_commands_handlers():
-    router.include_router(protect_router)
+    router = Router()
+    router.include_router(get_command_setting_router())
+    router.include_router(stats_router)
 
     return router

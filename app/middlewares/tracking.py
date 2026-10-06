@@ -1,5 +1,6 @@
 from database.models.user import User
-from database.models.chats import Chats
+from database.models.chat import Chat, ChatMember
+from database.models.statistic import MessageStatistic
 
 from typing import Any, Awaitable, Callable, Dict
 
@@ -18,10 +19,13 @@ class TrackMiddleware(BaseMiddleware):
             return await handler(event, data)
 
         if event.chat.type != "private":
-            await Chats.update_chat(event.chat)
+            await Chat.update_chat(event.chat)
+            await ChatMember.update_member(event.chat.id, event.from_user.id, "member")
 
         if event.from_user is not None and not event.from_user.is_bot and event.sender_chat is None:
             await User.update_user(event.from_user)
+
+        await MessageStatistic.add_message(event)
 
         return await handler(event, data)
 

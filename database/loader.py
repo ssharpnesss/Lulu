@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from peewee import SqliteDatabase, Model
 
 db = SqliteDatabase("assets/database.db")

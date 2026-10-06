@@ -13,6 +13,7 @@ class BotConfig(ConfigSection):
     spam_threshold: float = Field(default=0.9, gt=0, le=1)
     protects: list = [
         {"name": "antispam"},
+        {"name": "antiflood"},
         {"name": "welcome"},
     ]
 
