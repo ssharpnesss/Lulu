@@ -3,7 +3,7 @@ from aiogram import types
 
 from database.loader import BaseModel
 from app.utils.time import get_now
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, time
 
 class MessageStatistic(BaseModel):
 
@@ -114,20 +114,49 @@ class MessageStatistic(BaseModel):
         )
 
     @classmethod
-    async def get_stats(cls, chat_id: int, period: str = "day"):
+    async def get_stats(cls, chat_id: int, period: str = "day", limit: int = 30):
 
         items = cls.select(cls.user_id, fn.COUNT(cls.id).alias("count")).group_by(cls.user_id).where(cls.chat_id==chat_id)
 
+        _start_date = None
+        _end_date = get_now()
+
+        if period == "today":
+            _start_date = datetime.combine(get_now().date(), time.min)
+            items = items.where(cls.created_at >= _start_date)
+
         if period == "day":
-            items = items.where(cls.created_at > get_now() - timedelta(days=1))
+            _start_date = _end_date - timedelta(days=1)
+            items = items.where(cls.created_at >= _start_date)
 
         if period == "week":
-            items = items.where(cls.created_at > get_now() - timedelta(days=7))
+            _start_date = datetime.combine(_end_date - timedelta(days=_end_date.weekday()), time.min)
+            items = items.where(cls.created_at >= _start_date)
 
         if period == "month":
-            items = items.where(cls.created_at > get_now() - timedelta(days=30))
+            _start_date = datetime.combine(_end_date.replace(day=1), time.min)
+            items = items.where(cls.created_at >= _start_date)
 
-        return items.order_by(fn.COUNT(cls.id).desc())
+        if period == "all":
+            first_ = cls.select(cls.created_at).where(cls.chat_id==chat_id).order_by(cls.created_at.asc()).first()
+            if first_ is None: _start_date = _end_date
+            else: _start_date = first_.created_at
+            items = items
+
+        if isinstance(period, int):
+            _start_date = _end_date - timedelta(days=period)
+            items = items.where(cls.created_at >= _start_date)
+
+        
+        data = {
+            "period": period,
+            "start_date": _start_date.strftime("%Y/%m/%d %H:%M"),
+            "end_date": _end_date.strftime("%Y%m/%d %H:%M"),
+            "limit": limit,
+            "stats": items.order_by(fn.COUNT(cls.id).desc()).limit(limit),
+        }
+
+        return data 
 
         
 

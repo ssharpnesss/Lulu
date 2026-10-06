@@ -6,8 +6,8 @@ from unittest.mock import AsyncMock, patch
 from aiogram import Bot
 from aiogram.enums import ChatMemberStatus
 from aiogram.exceptions import TelegramBadRequest
-from aiogram.methods import SendMessage
-from aiogram.types import Message, User
+from aiogram.methods import SendMessage 
+from aiogram.types import Message, User, Chat as TGChat
 from peewee import SqliteDatabase
 from playhouse.migrate import SqliteMigrator, migrate
 
@@ -61,8 +61,9 @@ class WelcomeTests(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(await Setting.is_enabled(-1001,'welcome'))
         self.answer.reset_mock()
         user=User(id=42,is_bot=False,first_name='Иван <&>',last_name='Тест')
+        chat=TGChat(id=-1001,type='supergroup',title='Test')
         await self.route(self.message(new_chat_members=[user]))
-        self.answer.assert_awaited_once_with(render_welcome(template,user),parse_mode='HTML')
+        self.answer.assert_awaited_once_with(render_welcome(template,user,chat),parse_mode='HTML')
         await self.route(self.message('Лулу защита приветствие выкл'))
         self.assertFalse(await Setting.is_enabled(-1001,'welcome'))
         self.answer.reset_mock()
@@ -104,7 +105,8 @@ class WelcomeTests(unittest.IsolatedAsyncioTestCase):
 class WelcomeDataTests(unittest.TestCase):
     def test_placeholders_escape_names_and_optional_last_name(self):
         user=User(id=42,is_bot=False,first_name='<b>A&B</b>')
-        self.assertEqual(render_welcome('{имя}|{фамилия}|{ид}|{айди}|{имяфамилия}',user),
+        chat=TGChat(id=-1001,type='supergroup',title='Test')
+        self.assertEqual(render_welcome('{имя}|{фамилия}|{ид}|{айди}|{имяфамилия}',user, chat),
                          '&lt;b&gt;A&amp;B&lt;/b&gt;||42|42|&lt;b&gt;A&amp;B&lt;/b&gt;')
 
     def test_existing_database_migration_is_idempotent(self):

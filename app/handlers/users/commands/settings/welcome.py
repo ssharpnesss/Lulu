@@ -28,7 +28,7 @@ async def say_welcome_handler(message: Message, config: Config):
         return await message.reply(f"Приветствие для чата «<b>{message.chat.title}</b>» отсутствует.")
 
     target = message.reply_to_message.from_user
-    render_welcome_text = render_welcome(welcome_text, target)
+    render_welcome_text = render_welcome(welcome_text, target, message.chat)
 
     await message.reply_to_message.reply(render_welcome_text)
     
@@ -63,7 +63,7 @@ async def update_welcome_chat_handler(message: Message, config: Config, lulu_arg
 
     if not welcome_text:
         return await message.reply(
-            text=f"Укажи текст приветственного сообщения для чата «<b>{message.chat.title}</b>»",
+            text=f"Текст приветствия необходимо указать с новой строки - либо используй кнопку ниже",
             reply_markup=await get_only_setting_menu(
                 "welcome",
                 message.from_user.id, 

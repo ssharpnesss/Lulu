@@ -19,7 +19,7 @@ async def new_chat_member_handler(event: types.ChatMemberUpdated):
     welcome = await Setting.get_setting_value(chat.id, "welcome")
     if welcome is None: return
 
-    welcome_text = render_welcome(welcome, new_member.user)
+    welcome_text = render_welcome(welcome, new_member.user, chat)
     try: await event.bot.send_message(chat.id, welcome_text)
     except: pass
     return 
@@ -34,7 +34,7 @@ async def leave_chat_member_handler(event: types.ChatMemberUpdated):
     parting = await Setting.get_setting_value(chat.id, "parting")
     if parting is None: return
 
-    parting_text = render_welcome(parting, old_member.user)
+    parting_text = render_welcome(parting, old_member.user, chat)
     try: await event.bot.send_message(chat.id, parting_text)
     except: pass
 
