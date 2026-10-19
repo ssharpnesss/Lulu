@@ -28,7 +28,11 @@ def get_emoji(emoji: str, as_html: bool = True):
     EMOJI_MAP = {
         "stats_emoji": TelegramEmoji('<tg-emoji emoji-id="5203993413346680064">📊</tg-emoji>'),
         "on_status": TelegramEmoji('<tg-emoji emoji-id="5323307196807653127">🟢</tg-emoji>'),
-        "off_status": TelegramEmoji('<tg-emoji emoji-id="5323535839391653590">🔴</tg-emoji>')
+        "off_status": TelegramEmoji('<tg-emoji emoji-id="5323535839391653590">🔴</tg-emoji>'),
+        "clown": TelegramEmoji('<tg-emoji emoji-id="5249347825610798910">👑</tg-emoji>'),
+        "second_place": TelegramEmoji('<tg-emoji emoji-id="5447203607294265305">🥈</tg-emoji>'),
+        "third_place": TelegramEmoji('<tg-emoji emoji-id="5453902265922376865">🥉</tg-emoji>'),
+        "protect": TelegramEmoji('<tg-emoji emoji-id="5382325570782641346">🛡</tg-emoji>')
     }
 
     r = EMOJI_MAP.get(emoji, None)

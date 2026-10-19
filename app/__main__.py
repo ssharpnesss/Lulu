@@ -7,8 +7,11 @@ from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.fsm.storage.memory import MemoryStorage
 
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+
 from app.handlers import get_handlers
 from app.middlewares import register_middlewares
+from app.utils.flush import flush
 from database import init_database
 
 
@@ -26,7 +29,16 @@ async def main() -> None:
     register_middlewares(dp)
 
     await bot.delete_webhook(drop_pending_updates=True)
-    await dp.start_polling(bot, config=config)
+
+    scheduler = AsyncIOScheduler()
+    scheduler.add_job(flush, "interval", seconds=30, max_instances=1, coalesce=True)
+    scheduler.start()
+
+    try:
+        await dp.start_polling(bot, config=config)
+    finally:
+        scheduler.shutdown(wait=False)
+        await flush()
 
 
 if __name__ == "__main__":

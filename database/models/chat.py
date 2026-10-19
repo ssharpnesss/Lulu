@@ -17,6 +17,7 @@ class ChatMember(BaseModel):
 
     class Meta:
         db_table = "chat_members"
+        indexes = ((("chat_id", "user_id"), True),)
 
     @classmethod
     async def get_member(cls, chat_id: int, user_id: int):
@@ -85,3 +86,28 @@ class Chat(BaseModel):
         save_chat.save()
         return save_chat
 
+
+
+class WelcomedUser(BaseModel):
+    chat_id = BigIntegerField()
+    user_id = BigIntegerField()
+
+    created_at = DateTimeField(default=get_now)
+
+    class Meta:
+        table_name = "welcomed_users"
+        indexes = ((("chat_id", "user_id"), True),)
+
+    @classmethod
+    async def mark(cls, chat_id: int, user_id: int) -> bool:
+        """Запоминает приветствие. False - если пользователя уже приветствовали."""
+        _, created = cls.get_or_create(chat_id=chat_id, user_id=user_id)
+        return created
+
+    @classmethod
+    async def unmark(cls, chat_id: int, user_id: int) -> int:
+        return cls.delete().where((cls.chat_id == chat_id) & (cls.user_id == user_id)).execute()
+
+    @classmethod
+    async def clear(cls, chat_id: int) -> int:
+        return cls.delete().where(cls.chat_id == chat_id).execute()

@@ -12,4 +12,13 @@ class SettingEnable(BaseFilter):
         if message.from_user.is_bot: return False
 
         return await Setting.is_enabled(message.chat.id, self.protect)
-        
+
+
+class CommandEnabled(BaseFilter):
+    def __init__(self, key: str):
+        self.key = key
+
+    async def __call__(self, message: Message) -> bool:
+        if message.from_user is None: return False
+        if message.from_user.is_bot: return False
+        return not await Setting.is_command_disabled(message.chat.id, self.key)

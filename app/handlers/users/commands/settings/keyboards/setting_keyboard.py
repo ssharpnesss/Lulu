@@ -1,7 +1,8 @@
 from aiogram.utils.keyboard import InlineKeyboardBuilder, InlineKeyboardButton
 from aiogram.filters.callback_data import CallbackData
 
-from database.models.setting import ANTIFLOOD_PARAMETERS, Setting, SettingDescription
+from app.utils.captcha import CAPTCHA_PACKS, CUSTOM_CAPTCHA_PACK
+from database.models.setting import ANTIFLOOD_PARAMETERS, CAPTCHA_LEVELS, Setting, SettingDescription
 
 class SettingKeyboard(CallbackData, prefix="setting"):
     action: str
@@ -52,6 +53,27 @@ async def protection_menu(setting_key: str, user_id: int, chat_id: int):
         values = await Setting.get_antiflood_parameters(chat_id)
         for parameter, (label, _, _) in ANTIFLOOD_PARAMETERS.items():
             builder.row(button(f"{label}: {values[parameter]:g}", parameter))
+    if setting_key == "captcha":
+        current = await Setting.get_captcha_level(chat_id)
+        builder.row(*(
+            button(name, f"lvl_{level}", style="success" if level == current else None)
+            for level, name in CAPTCHA_LEVELS.items()
+        ))
+        if current == "basic":
+            pack = await Setting.get_captcha_pack(chat_id)
+            builder.row(*(
+                button(name, f"pack_{key}", style="success" if key == pack else None)
+                for key, (name, _) in CAPTCHA_PACKS.items()
+            ))
+            custom = await Setting.get_captcha_custom_pack(chat_id)
+            custom_buttons = [button("Загрузить свой пак", "pack_upload")]
+            if custom:
+                custom_buttons.insert(0, button(
+                    custom["title"], f"pack_{CUSTOM_CAPTCHA_PACK}",
+                    emj_id=custom["emojis"][0][1],
+                    style="success" if pack == CUSTOM_CAPTCHA_PACK else None,
+                ))
+            builder.row(*custom_buttons)
             
     builder.row(button("Назад", "back"))
     return builder.as_markup()

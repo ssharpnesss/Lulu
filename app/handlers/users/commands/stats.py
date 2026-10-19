@@ -1,9 +1,10 @@
 from aiogram import Router, types
 
 from app.filters.lulu import LuluFilter
+from app.filters.setting import CommandEnabled
 from database.models.user import User
 from database.models.statistic import MessageStatistic
-from app.utils.emoji import get_emoji as EMOJI
+from app.utils.emoji import get_emoji
 
 router = Router()
 
@@ -50,7 +51,7 @@ def _parse_args(items: list):
 
 
 
-@router.message(LuluFilter(command=["стата", "статистика"]))
+@router.message(LuluFilter(command=["стата", "статистика"]), CommandEnabled("стата"))
 async def get_stats_handler(message: types.Message, lulu_args: list):
     if message.chat.type == "private":
         return
@@ -60,13 +61,15 @@ async def get_stats_handler(message: types.Message, lulu_args: list):
 
     result = ""
     all_count = 0
-    for i in stats.get("stats"):
+    for place, i in enumerate(stats.get("stats")):
         user_id = i.user_id
         count = i.count
         all_count += count
 
-        user = await User.get_name(user_id, True,)
-        result += f"{user} - {count}\n"
+        user = await User.get_name(user_id, True)
+        place_emoji = {0: "clown", 1: "second_place", 2: "third_place"}.get(place)
+        prefix = f"{get_emoji(place_emoji)} " if place_emoji else ""
+        result += f"{prefix}{user} - {count}\n"
 
     period_text = get_period_str(period_filter)
     result_text = f"<blockquote>{result}</blockquote>" if len(result.splitlines()) <= 50 else f"<blockquote expandable>{result}</blockquote>"
@@ -76,7 +79,7 @@ async def get_stats_handler(message: types.Message, lulu_args: list):
     period_date_text = f"c {start_date} по {end_date}"
 
     result_text = (
-        f"{EMOJI('stats_emoji')} <b>Статистика по общительным пользователям {period_text}</b>\n"
+        f"{get_emoji('stats_emoji')} <b>Статистика по общительным пользователям {period_text}</b>\n"
         f"<tg-spoiler>{period_date_text}</tg-spoiler>\n\n"
         f"{result_text}\n"
         f"Всего сообщений {all_count}"

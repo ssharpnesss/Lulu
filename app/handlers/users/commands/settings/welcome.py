@@ -1,11 +1,12 @@
 from aiogram import Router
-from aiogram.enums import ChatType
 from aiogram.types import Message
 
 from app.config import Config
 from app.filters.lulu import LuluFilter
+from app.filters.setting import CommandEnabled
 from app.filters.is_chat_admin import IsChatAdmin
 from database.models.setting import Setting
+from database.models.chat import WelcomedUser
 
 from app.utils.welcome import render_welcome
 
@@ -14,17 +15,14 @@ from .keyboards.setting_keyboard import get_only_setting_menu
 router = Router(name="setting_welcome")
 
 
-@router.message(LuluFilter(command=["скажи привет", "приветствуй"]))
+@router.message(LuluFilter(command=["скажи привет", "приветствуй"]), CommandEnabled("приветствие"))
 async def say_welcome_handler(message: Message, config: Config):
-
-    if message.chat.type not in {ChatType.GROUP, ChatType.SUPERGROUP}:
-        return
 
     if not message.reply:
         return
     
     welcome_text = await Setting.get_setting_value(message.chat.id, "welcome")
-    if not welcome_text:
+    if not welcome_text or welcome_text == "off":
         return await message.reply(f"Приветствие для чата «<b>{message.chat.title}</b>» отсутствует.")
 
     target = message.reply_to_message.from_user
@@ -33,14 +31,11 @@ async def say_welcome_handler(message: Message, config: Config):
     await message.reply_to_message.reply(render_welcome_text)
     
 
-@router.message(LuluFilter(command=["приветствие"], is_equals=True))
+@router.message(LuluFilter(command=["приветствие"], is_equals=True), CommandEnabled("приветствие"))
 async def get_welcome_chat_handler(message: Message):
 
-    if message.chat.type not in {ChatType.GROUP, ChatType.SUPERGROUP}:
-        return
-
     welcome_text = await Setting.get_setting_value(message.chat.id, "welcome")
-    if not welcome_text:
+    if not welcome_text or welcome_text == "off":
         return await message.reply(f"Приветствие для чата «<b>{message.chat.title}</b>» отсутствует.")
 
     await message.reply(f"Приветствие чата «<b>{message.chat.title}</b>»:\n\n<blockquote>{welcome_text}</blockquote>")
@@ -50,11 +45,14 @@ async def get_welcome_chat_handler(message: Message):
 @router.message(LuluFilter(command=["-приветствие", "-привет"], is_equals=True), IsChatAdmin())
 async def remove_welcome_chat_handler(message: Message):
 
-    if message.chat.type not in {ChatType.GROUP, ChatType.SUPERGROUP}:
-        return
-
     await Setting.set_setting(message.chat.id, "welcome", None)
     await message.reply(f"Приветствие чата «<b>{message.chat.title}</b>» очищено.")
+
+@router.message(LuluFilter(command=["очистить приветствованных", "сбросить приветствия"], is_equals=True), IsChatAdmin())
+async def clear_welcomed_handler(message: Message):
+
+    count = await WelcomedUser.clear(message.chat.id)
+    await message.reply(f"Список приветствованных в чате «<b>{message.chat.title}</b>» очищен ({count}).")
 
 @router.message(LuluFilter(command=["+приветствие", "+привет"]), IsChatAdmin())
 async def update_welcome_chat_handler(message: Message, config: Config, lulu_args: dict[list]):
@@ -75,5 +73,3 @@ async def update_welcome_chat_handler(message: Message, config: Config, lulu_arg
     
     await Setting.set_setting(message.chat.id, "welcome", "\n".join(welcome_text))
     await message.reply(f"Приветствие чата «<b>{message.chat.title}</b>» обновлено.")
-    
-    

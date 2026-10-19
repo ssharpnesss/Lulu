@@ -14,7 +14,9 @@ class BotConfig(ConfigSection):
     protects: list = [
         {"name": "antispam"},
         {"name": "antiflood"},
+        {"name": "antiraid"},
         {"name": "welcome"},
+        {"name": "captcha"},
     ]
 
 class Config(ConfigSection):

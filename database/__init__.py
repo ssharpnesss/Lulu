@@ -2,19 +2,31 @@
 DEFAULT_SETTING = {
     "antispam": {
         "name": "Анти-спам",
-        "description": "Защита от спама шлюхоботов."
+        "description": "Лулу защищает от спама шлюхоботов."
     },
     "antiflood": {
         "name": "Анти-флуд",
-        "description": "Защита от флуда (большое кол-во сообщений от человека)."
+        "description": "Лулу защищает от флуда (большое кол-во сообщений от человека)."
+    },
+    "antiraid": {
+        "name": "Анти-рейд",
+        "description": "Лулу защищает от рейда (массовый вход или добавление участников) - лулу кикает рейдеров."
     },
     "welcome": {
         "name": "Приветствие",
-        "description": "Приветствие новых участников в чате."
+        "description": "Лулу приветствует новых участников в чате."
+    },
+    "captcha": {
+        "name": "Каптча",
+        "description": "Лулу проверяет новых участников каптчей - пока она не пройдена, писать в чат нельзя."
     },
     "parting": {
         "name": "Прощание",
-        "description": "Прощание с участником что вышел из чата."
+        "description": "Лулу прощается с участником что вышел из чата."
+    },
+    "moderation": {
+        "name": "Модерация",
+        "description": "Команды модерации для администраторов: мут, бан, кик, предупреждения."
     }
 }
 
@@ -22,17 +34,20 @@ async def init_database():
     from database.loader import db
     from database.models.setting import Setting, SettingDescription
     from database.models.user import User
-    from database.models.chat import Chat, ChatMember
+    from database.models.chat import Chat, ChatMember, WelcomedUser
     from database.models.statistic import MessageStatistic
-    from playhouse.migrate import SqliteMigrator, migrate
+    from database.models.captcha import Captcha
+    from database.models.warn import Warn
 
     with db.atomic():
         db.create_tables(
             [
                 User,
-                Chat, ChatMember,
+                Chat, ChatMember, WelcomedUser,
                 Setting, SettingDescription,
-                MessageStatistic
+                MessageStatistic,
+                Captcha,
+                Warn,
             ]
         )
 

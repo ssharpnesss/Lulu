@@ -21,16 +21,16 @@ class MessageStatistic(BaseModel):
 
     class Meta:
         table_name = "message_statistics"
+        indexes = ((("chat_id", "created_at"), False),)
 
     @classmethod
-    async def add_message(cls, message: types.Message):
-        if message.chat.type == "private": return
-
-         # думаю в дальнейшем сделать что то типо кэша и сначало сохранять в кэш
-         # (мб редис) и потом закидывать в бд что бы не нагружать частыми запросами
+    def add_message(cls, message: types.Message) -> dict | None:
+        """Разбирает сообщение в dict для буфера (в БД не пишет)."""
+        if message.chat.type == "private": return None
 
         chat = message.chat
         user = message.from_user
+        if user is None: return None
 
         file_id = None
         file_type = None
@@ -103,15 +103,25 @@ class MessageStatistic(BaseModel):
         if message.reply_to_message:
             reply_to_message_id = message.reply_to_message.message_id
 
-        cls.create(
-            chat_id=chat.id,
-            user_id=user.id,
-            message_id=message.message_id,
-            file_id=file_id,
-            file_type=file_type,
-            text=text,
-            reply_to_message_id=reply_to_message_id
-        )
+        return {
+            "chat_id": chat.id,
+            "user_id": user.id,
+            "message_id": message.message_id,
+            "file_id": file_id,
+            "file_type": file_type,
+            "text": text,
+            "reply_to_message_id": reply_to_message_id
+        }
+
+        # cls.create(
+        #     chat_id=chat.id,
+        #     user_id=user.id,
+        #     message_id=message.message_id,
+        #     file_id=file_id,
+        #     file_type=file_type,
+        #     text=text,
+        #     reply_to_message_id=reply_to_message_id
+        # )
 
     @classmethod
     async def get_stats(cls, chat_id: int, period: str = "day", limit: int = 30):

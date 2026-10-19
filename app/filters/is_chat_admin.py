@@ -5,7 +5,7 @@ from aiogram import Bot
 from aiogram.enums import ChatMemberStatus
 from aiogram.exceptions import TelegramBadRequest, TelegramForbiddenError
 from aiogram.filters import BaseFilter
-from aiogram.types import CallbackQuery, Message
+from aiogram.types import CallbackQuery, ChatMemberUpdated, Message
 
 class Permission(str, Enum):
     can_delete_messages = "can_delete_messages"
@@ -67,10 +67,10 @@ class IsBotPermission(BaseFilter):
 
     async def __call__(
         self,
-        event: Message | CallbackQuery,
+        event: Message | CallbackQuery | ChatMemberUpdated,
         bot: Bot,
     ) -> bool:
-        if isinstance(event, Message):
+        if isinstance(event, (Message, ChatMemberUpdated)):
             chat_id = event.chat.id
         elif isinstance(event, CallbackQuery):
             if event.message is None:
