@@ -86,7 +86,7 @@ class AntiFloodMiddleware(BaseMiddleware):
         if should_warn:
             try:
                 await message.answer(
-                    f"⚠️ {message.from_user.full_name}, не так быстро чучело\n",
+                    f"⚠️ {message.from_user.full_name}, не так быстро Поттер!\n",
                 )
             except TelegramAPIError:
                 logger.exception("Не удалось отправить предупреждение")

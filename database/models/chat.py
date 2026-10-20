@@ -4,6 +4,18 @@ from aiogram import types
 from database.loader import BaseModel
 from app.utils.time import get_now
 
+import random
+import string
+
+def _generate_uuid(min_size: int = 7, max_size: int = 10):
+    _size = random.randint(min_size, max_size)
+    key = None
+    while not key:
+        _key = "".join(random.choices(string.ascii_letters + string.digits, k=_size))
+        if not Chat.get_or_none(Chat.u_chat_id == _key):
+            key = _key
+            break
+    return key
 
 
 class ChatMember(BaseModel):
@@ -34,9 +46,13 @@ class ChatMember(BaseModel):
                 member.updated_at = get_now()
                 member.save()
 
+
         
 
 class Chat(BaseModel):
+
+    u_chat_id = CharField(unique=True, default=_generate_uuid)
+
     chat_id = BigIntegerField(unique=True)
     owner_id = BigIntegerField(null=True)
     added_by_id = BigIntegerField(null=True)
@@ -54,6 +70,10 @@ class Chat(BaseModel):
             ident = int(ident)
         if isinstance(ident, int):
             return cls.get_or_none(cls.chat_id == ident)
+
+        result = cls.get_or_none(cls.u_chat_id == ident)
+        if result: return result
+
         return cls.get_or_none(cls.username == ident.lower())
 
     @classmethod
@@ -62,6 +82,7 @@ class Chat(BaseModel):
         username = chat.username.lower() if chat.username else None
         if not save_chat:
             save_chat = cls.create(
+                u_chat_id=cls._generate_u_chat_id(),
                 chat_id=chat.id,
                 chat_name=chat.title or chat.full_name or str(chat.id),
                 chat_type=chat.type,

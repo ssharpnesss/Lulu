@@ -10,6 +10,7 @@ class ConfigSection(BaseModel):
 
 class BotConfig(ConfigSection):
     token: SecretStr
+    spam_api_key: SecretStr
     spam_threshold: float = Field(default=0.9, gt=0, le=1)
     protects: list = [
         {"name": "antispam"},
@@ -41,4 +42,5 @@ def parse_config(config_file: str = "config.toml") -> Config:
 
     data = toml.loads(path.read_text(encoding="utf-8"))
     data.setdefault("bot", {})["token"] = token
+    data.setdefault("bot", {})["spam_api_key"] = os.getenv("SPAM_API_KEY", '-')
     return Config.model_validate(data)

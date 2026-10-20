@@ -7,7 +7,9 @@ from app.filters.setting import SettingEnable
 from app.filters.is_chat_admin import IsBotPermission
 
 from database.models.setting import Setting
-from app.utils.predict import classify
+#from app.utils.predict import classify
+
+from app.utils.api.predict_spam import predict_spam
 from app.utils.text import clean_and_normalize_text
 from app.config import Config
 
@@ -22,7 +24,7 @@ async def cmd_antispam_detect_handler(message: Message, config: Config):
 
     safe_text = clean_and_normalize_text(text)
 
-    result = classify(safe_text)
+    result = predict_spam(safe_text, config.bot.spam_api_key.get_secret_value())
     if result["label"] == "SPAM":
         if result["prob_spam"] >= config.bot.spam_threshold:
             msg = await message.reply("Lulu считает это сообщение спамом поэтому оно удаляется!")

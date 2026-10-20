@@ -1,4 +1,5 @@
 import random
+import string
 
 from peewee import BigIntegerField, CharField, DateTimeField, BooleanField, TextField
 from aiogram import types
@@ -19,8 +20,20 @@ FACULTIES = {
 def random_faculty() -> str:
     return random.choice(list(FACULTIES))
 
+def _generate_uuid(min_size: int = 4, max_size: int = 7):
+    _size = random.randint(min_size, max_size)
+    key = None
+    while not key:
+        _key = "".join(random.choices(string.ascii_letters + string.digits, k=_size))
+        if not User.get_or_none(User.u_user_id == _key):
+            key = _key
+            break
+    return key
+
 
 class User(BaseModel):
+
+    u_user_id = CharField(unique=True, default=_generate_uuid)
     user_id = BigIntegerField(unique=True)
     username = CharField(null=True)
     first_name = CharField()
@@ -33,6 +46,7 @@ class User(BaseModel):
 
     class Meta:
         table_name = "users"
+
 
     @classmethod
     async def get_name(cls, ident: str | int, is_mention: bool = False, default_name: str = "Неизвестный"):
@@ -78,10 +92,12 @@ class User(BaseModel):
         username = user.username.lower() if user.username else None
         if not save_user:
             save_user = cls.create(
+                u_user_id=cls._generate_u_user_id(),
                 user_id=user.id,
                 first_name=escape_html(user.first_name),
                 last_name=escape_html(user.last_name) if user.last_name else None,
-                username=username
+                username=username,
+                pm=is_pm
             )
         else:
             if save_user.first_name != escape_html(user.first_name):

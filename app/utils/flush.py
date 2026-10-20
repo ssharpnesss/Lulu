@@ -25,6 +25,7 @@ def _write(data: tuple) -> None:
                     User.first_name: EXCLUDED.first_name,
                     User.last_name: EXCLUDED.last_name,
                     User.username: EXCLUDED.username,
+                    User.pm: EXCLUDED.pm,
                     User.updated_at: EXCLUDED.updated_at,
                 },
             ).execute()

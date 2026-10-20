@@ -3,6 +3,7 @@ from aiogram import Router, types
 from app.filters.lulu import LuluFilter
 from app.filters.setting import CommandEnabled
 from database.models.user import User
+from database.models.chat import Chat
 from database.models.statistic import MessageStatistic
 from app.utils.emoji import get_emoji
 
@@ -48,6 +49,40 @@ def _parse_args(items: list):
     if period is None: period = "day"
 
     return limit, period
+
+@router.message(LuluFilter(command=['инф']))
+async def test_cmd_info(message: types.Message):
+
+    reply = message.reply_to_message
+
+    chat = await Chat.get_chat(message.chat.id)
+    user = await User.get_user(message.from_user.id)
+
+    reply_text = ""
+    if reply:
+        reply_user = await User.get_user(reply.from_user.id)
+        if reply_user:
+            reply_text = (
+                f"\n"
+                f"Reply ID - {reply_user.user_id}\n"
+                f"Reply UID - {reply_user.u_user_id}\n"
+                f"Reply Фак - {reply_user.faculty}\n"
+
+            )
+        else: reply_text = f"Reply - Noname"
+
+    text = (
+        f"ID - {user.user_id}\n"
+        f"UID - {user.u_user_id}\n"
+        f"Фак - {user.faculty}\n"
+        f"\nChat ID - {chat.chat_id}\n"
+        f"Chat UID - {chat.u_chat_id}\n"
+        f"{reply_text}"
+    )
+
+    await message.reply(text=text)
+
+
 
 
 

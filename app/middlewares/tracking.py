@@ -34,11 +34,16 @@ class TrackMiddleware(BaseMiddleware):
 
         if event.from_user is not None and not event.from_user.is_bot and event.sender_chat is None:
             user = event.from_user
+            db_user = await User.get_user(user.id)
+            is_pm = event.chat.type == "private"
+            if db_user and db_user.pm: is_pm = True
+
             buffer.users[user.id] = {
                 "user_id": user.id,
                 "first_name": escape_html(user.first_name),
                 "last_name": escape_html(user.last_name) if user.last_name else None,
                 "username": user.username.lower() if user.username else None,
+                "pm": is_pm,
                 "updated_at": get_now(),
             }
 
